@@ -5,6 +5,7 @@
 #include <optional>
 #include <memory>
 #include <iostream>
+#include <conio.h>
 using namespace std;
 class Graph {
 public:
@@ -49,7 +50,7 @@ public:
 
     //проверка-добавление-удаление ребер
     bool has_edge(const int& from, const int& to) const {
-        if (has_vertex(from)==-1) throw "Vertex from noy exist";
+        if (has_vertex(from)==-1) throw "Vertex from not exist";
         auto tmp = vertus[from].edge;
         while (tmp) {
             if (tmp->to == to) return true;
@@ -58,8 +59,7 @@ public:
         return false;
     }
 
-    void add_edge(const int from, const int to,
-        const double& d) {
+    void add_edge(const int from, const int to, const double& d) {
         if (has_vertex(from)==-1) throw "Vertex from noy exist";
         if (has_vertex(to)==-1) throw "Vertex to not exist";
         if (!has_edge(from, to)) vertus[from].edge = make_shared<Edge>(to, d, vertus[from].edge);
@@ -181,10 +181,206 @@ public:
 
         return path;
     }
+
+    int task() const {
+        double max_average = -1;
+        int max_vertex = -1;
+
+        for (auto vertex : vertus) {
+            shared_ptr<Edge> tmp = vertex.edge;
+            double total_distance = 0;
+            int count_edges = 0;
+            while (tmp) {
+                total_distance += tmp->distance;
+                count_edges++;
+                tmp = tmp->next;
+            }
+            if (count_edges > 0) {
+                double average = total_distance / count_edges;
+                if (average > max_average) {
+                    max_average = average;
+                    max_vertex = vertex.id;
+                }
+            }
+        }
+        if (max_vertex == -1) {
+            throw "No vertices in the graph";
+        }
+        return max_vertex;
+    }
 };
 
-int main() {
+int get_key_T()
+{
+    int key = _getch();
+    if ((key == 0) || (key == 224))
+        key = _getch();
+    return key;
+}
 
+int menu_T() {
+    cout << "\nWhat are you want to do?\n\n"
+        "1 - add vertex\n"
+        "2 - add edge\n"
+        "3 - check vertex\n"
+        "4 - check edge\n"
+        "5 - walk\n"
+        "6 - task\n"
+        "7 - walk\n"
+        "go out: Esc\n";
+
+
+    while (true)
+    {
+        int key = get_key_T();
+        if ((key == 27) || (key >= '0' && key <= '6'))
+            return key;
+    }
+}
+
+int Check()
+{
+    int number = -1;
+    while (number <= 0)
+    {
+        while (!(cin >> number) || (cin.peek() != '\n'))
+        {
+            cin.clear();
+            while (cin.get() != '\n');
+            cout << "Error. Repeat input\n";
+        }
+        if (number <= 0) cout << "Error. Enter a positive number\n";
+
+    }
+
+    return number;
+}
+double Check_double()
+{
+    int number = -1;
+    while (number <= 0)
+    {
+        while (!(cin >> number) || (cin.peek() != '\n'))
+        {
+            cin.clear();
+            while (cin.get() != '\n');
+            cout << "Error. Repeat input\n";
+        }
+        if (number <= 0) cout << "Error. Enter a positive number\n";
+
+    }
+
+    return number;
+}
+
+void add_vertex(Graph* graph) {
+    system("cls");
+    cout << "Enter vertex id:";
+    int v = Check();
+    while (graph->has_vertex(v)!=-1) {
+        cout << "Error. Enter vertex id:";
+        int v = Check();
+    }
+    graph->add_vertex(v);
+}
+
+void add_edge(Graph* graph) {
+    system("cls");
+    cout << "Enter vertex id from:";
+    int from_v = Check();
+    while (graph->has_vertex(from_v) == -1) {
+        cout << "Error. Enter vertex id:";
+        int from_v = Check();
+    }
+    cout << "Enter vertex id to:";
+    int to_v = Check();
+    while (graph->has_vertex(to_v) == -1) {
+        cout << "Error. Enter vertex id:";
+        int to_v = Check();
+    }
+    cout << "Enter edge weight:";
+    double weight = Check_double();
+    while (graph->has_edge(from_v, to_v)==true) {
+        system("cls");
+        cout << "Edge eist. Repeat input";
+        cout << "Enter vertex id from:";
+        int from_v = Check();
+        cout << "Enter vertex id to:";
+        int to_v = Check();
+        cout << "Enter edge weight:";
+        double edge = Check_double();
+    }
+    graph->add_edge(from_v, to_v, weight);
+}
+void check_vertex(Graph* graph) {
+    system("cls");
+    cout << "Enter vertex id from:";
+    int v = Check();
+    if (graph->has_vertex(v) != -1) cout << "Vertex exist";
+    else cout << "Vertex not exist";
+}
+
+void check_edge(Graph* graph) {
+    system("cls");
+    cout << "Enter vertex id from:";
+    int from_v = Check();
+    cout << "Enter vertex id to:";
+    int to_v = Check();
+    if (graph->has_edge(from_v, to_v) == true) cout << "Edge exist";
+    else cout << "Edge not exist";
+}
+
+void print(Graph graph) {
+    for (auto i : graph.vertus) {
+        cout << "Vertex " << i.id << " -> ";
+        shared_ptr<Graph::Edge> tmp = i.edge;
+        while (tmp) {
+            cout << tmp->to << " (weight " << tmp->distance << "), ";
+            tmp = tmp->next;
+        }
+    }
+}
+
+void task(Graph graph) {
+    system("cls");
+    cout << "The vertex is farthest from its neighbors:" << graph.task();
+}
+
+void walk(Graph graph) {
+    cout << "Enter the vertex to walk:";
+    int i = Check();
+    graph.walk(i);
+}
+int main() {
+    Graph graph;
+    while (true) {
+        int m = menu_T();
+        if (m == 27) break;
+        switch (m)
+        {
+        case '1':
+            add_vertex(&graph);
+            break;
+        case '2':
+            add_edge(&graph);
+            break;
+        case '3':
+            check_vertex(&graph);
+            break;
+        case '4':
+            check_edge(&graph);
+            break;
+        case '5':
+            print(graph);
+            break;
+        case '6':
+            task(graph);
+            break;
+        case '7':
+            walk(graph);
+            break;
+        }
+    }
     return 0;
 }
 
