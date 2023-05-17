@@ -7,7 +7,7 @@
 #include <iostream>
 using namespace std;
 class Graph {
-private:
+public:
     struct Edge {
         double distance;
         int to;
@@ -23,7 +23,7 @@ private:
     };
 
     vector<Vertex> vertus;
-public:
+    Graph() = default;
     //проверка-добавление-удаление вершин
     int has_vertex(const int id) const {
         for (int i = 0; i < vertus.size(); i++) {
@@ -32,16 +32,19 @@ public:
         return -1;
     }
     void add_vertex(const int id) {
-        if (!has_vertex(id)!=-1) vertus.push_back(Vertex(id));
+        if (has_vertex(id)==-1) vertus.push_back(Vertex(id));
         else throw "Vertex exist";
     }
+
     bool remove_vertex(const int id) {
-        auto it = find_if(vertus.begin(), vertus.end(), has_vertex(id)!=-1);
-        if (it != vertus.end()) {
-            vertus.erase(it);
+        for (auto i = vertus.begin(); i != vertus.end(); ++i) {
+            if (i->id == id) {
+                vertus.erase(i);
+                return true;
+            }
         }
+        return false;
     }
-    std::vector<Vertex> vertices() const;
 
 
     //проверка-добавление-удаление ребер
@@ -57,8 +60,8 @@ public:
 
     void add_edge(const int from, const int to,
         const double& d) {
-        if (!has_vertex(from)==-1) throw "Vertex from noy exist";
-        if (!has_vertex(to)==-1) throw "Vertex to not exist";
+        if (has_vertex(from)==-1) throw "Vertex from noy exist";
+        if (has_vertex(to)==-1) throw "Vertex to not exist";
         if (!has_edge(from, to)) vertus[from].edge = make_shared<Edge>(to, d, vertus[from].edge);
     }
     bool remove_edge(const int from, const int to) {
@@ -74,11 +77,12 @@ public:
                     vertus[from].edge = edge->next;
                 }
                 edge = nullptr;
-                break;
+                return true;
             }
             pred = edge;
             edge = edge->next;
         }
+        return false;
     }
     bool remove_edge(const Edge& e); //c учетом расстояния
     bool has_edge(const Edge& e); //c учетом расстояния в Edge
@@ -112,7 +116,7 @@ public:
             }
         }
         for (auto i : vertus) {
-            shared_ptr<Edge> tmp;
+            shared_ptr<Edge> tmp= i.edge;
             while (tmp) {
                 int from_ind = has_vertex(i.id);
                 int to_ind = has_vertex(tmp->to);
@@ -123,12 +127,11 @@ public:
                 }
             }
         }
+        return true;
     }
     //поиск кратчайшего пути
-    vector<Edge> shortest_path(const Vertex& from,
-        const Vertex& to) const;
     //обход
-    vector<Vertex>  walk(const int start_vertex)const {
+    void  walk(const int start_vertex)const {
         int start_ind = has_vertex(start_vertex);
         if (start_ind == -1) throw "Vertex start not exist";
         queue<int> q;
@@ -142,13 +145,41 @@ public:
            shared_ptr<Edge> tmp = vertus[tmp_ind].edge;
            while (tmp) {
                int tmp_next_ind = has_vertex(tmp->to);
-               if (tmp_next_ind != -1 && vis[tmp_next_ind]) {
+               if (tmp_next_ind != -1 && !vis[tmp_next_ind]) {
                    q.push(tmp_next_ind);
                    vis[tmp_next_ind] = true;
                }
                tmp = tmp->next;
            }
         }
+    }
+
+    vector<Edge> shortest_path(const int from_id, int to_id) {
+        vector<double> dist;
+        vector<int> previous;
+        vector<Edge> path;
+
+        if (!belman(from_id, dist, previous)) {
+            throw "Graph have a negative weight";
+        }
+
+        int to_ind = has_vertex(to_id);
+        if (to_ind==-1) {
+            throw "Vertex to not exist";
+        }
+
+        for (int v = to_ind; v != -1; v = previous[v]) {
+            if (v == previous[v]) {
+                path.push_back(Edge(from_id, dist[v], nullptr));
+            }
+            else {
+                path.push_back(Edge(vertus[v].id, dist[v] - dist[previous[v]], nullptr));
+            }
+        }
+
+        reverse(path.begin(), path.end());
+
+        return path;
     }
 };
 
