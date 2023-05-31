@@ -182,31 +182,41 @@ public:
         return path;
     }
 
-    int task() const {
-        double max_average = -1;
-        int max_vertex = -1;
 
-        for (auto vertex : vertus) {
+    int emergency()
+    {
+        if (vertus.size() == 0) throw "Graph is empty";
+
+        double max_sum = -<double>INFINITY;
+        int max_id = -1;
+        for (auto& vertex : vertus) {
+            double sum = 0;
             shared_ptr<Edge> tmp = vertex.edge;
-            double total_distance = 0;
-            int count_edges = 0;
-            while (tmp) {
-                total_distance += tmp->distance;
-                count_edges++;
+            while (tmp != nullptr) {
+                sum += tmp->distance;
                 tmp = tmp->next;
             }
-            if (count_edges > 0) {
-                double average = total_distance / count_edges;
-                if (average > max_average) {
-                    max_average = average;
-                    max_vertex = vertex.id;
+
+            for (auto& v : vertus) {
+                if (has_edge(v.id, vertex.id)) {
+                    shared_ptr<Edge> tmp = v.edge;
+                    while (tmp != nullptr) {
+                        if (tmp->to == vertex.id) {
+                            sum += tmp->distance;
+                            break;
+                        }
+                        tmp = tmp->next;
+                    }
                 }
             }
+
+            if (sum > max_sum) {
+                max_sum = sum;
+                max_id = vertex.id;
+            }
         }
-        if (max_vertex == -1) {
-            throw "No vertices in the graph";
-        }
-        return max_vertex;
+
+        return max_id;
     }
 };
 
@@ -224,16 +234,17 @@ int menu_T() {
         "2 - add edge\n"
         "3 - check vertex\n"
         "4 - check edge\n"
-        "5 - walk\n"
+        "5 - print\n"
         "6 - task\n"
         "7 - walk\n"
+        "8 - belman\n"
         "go out: Esc\n";
 
 
     while (true)
     {
         int key = get_key_T();
-        if ((key == 27) || (key >= '0' && key <= '6'))
+        if ((key == 27) || (key >= '0' && key <= '8'))
             return key;
     }
 }
@@ -343,13 +354,26 @@ void print(Graph graph) {
 
 void task(Graph graph) {
     system("cls");
-    cout << "The vertex is farthest from its neighbors:" << graph.task();
+    cout << "The vertex is farthest from its neighbors:" << graph.emergency();
 }
 
 void walk(Graph graph) {
     cout << "Enter the vertex to walk:";
     int i = Check();
     graph.walk(i);
+}
+void shortest_path(Graph graph) {
+    vector<double> dist;
+    vector<int> prev;
+    cout << "Enter the vertex to start shortest_path:";
+    int from = Check();
+    cout << "Enter the vertex to start shortest_path:";
+    int to = Check();
+    graph.shortest_path(from,to, dist, prev);
+    cout << "Enter the vertex to  belman:";
+    int j = Check();
+    int index= min_element(dist.begin(), dist.end()) - dist.begin();
+    cout << "dist = " << dist[index] << " previous:" << prev[index];
 }
 int main() {
     Graph graph;
@@ -378,6 +402,9 @@ int main() {
             break;
         case '7':
             walk(graph);
+            break;
+        case '8':
+            belman(graph);
             break;
         }
     }
