@@ -13,27 +13,29 @@ public:
         double distance;
         int to;
         shared_ptr<Edge> next;
-        Edge(int to, double dist, shared_ptr<Edge> edge) : to(to),distance(dist),next(edge) {}
+        Edge(int to, double dist, shared_ptr<Edge> edge) : to(to), distance(dist), next(edge) {}
     };
 
     struct Vertex
     {
         int id;
         shared_ptr<Edge> edge;
-        Vertex(int id): id(id),edge(nullptr) {}
+        Vertex(int id) : id(id), edge(nullptr) {}
     };
 
     vector<Vertex> vertus;
+
     Graph() = default;
-    //проверка-добавление-удаление вершин
+
     int has_vertex(const int id) const {
         for (int i = 0; i < vertus.size(); i++) {
             if (vertus[i].id == id) return i;
         }
         return -1;
     }
+
     void add_vertex(const int id) {
-        if (has_vertex(id)==-1) vertus.push_back(Vertex(id));
+        if (has_vertex(id) == -1) vertus.push_back(Vertex(id));
         else throw "Vertex exist";
     }
 
@@ -47,10 +49,8 @@ public:
         return false;
     }
 
-
-    //проверка-добавление-удаление ребер
     bool has_edge(const int& from, const int& to) const {
-        if (has_vertex(from)==-1) throw "Vertex from not exist";
+        if (has_vertex(from) == -1) throw "Vertex from not exist";
         auto tmp = vertus[from].edge;
         while (tmp) {
             if (tmp->to == to) return true;
@@ -60,12 +60,13 @@ public:
     }
 
     void add_edge(const int from, const int to, const double& d) {
-        if (has_vertex(from)==-1) throw "Vertex from noy exist";
-        if (has_vertex(to)==-1) throw "Vertex to not exist";
+        if (has_vertex(from) == -1) throw "Vertex from noy exist";
+        if (has_vertex(to) == -1) throw "Vertex to not exist";
         if (!has_edge(from, to)) vertus[from].edge = make_shared<Edge>(to, d, vertus[from].edge);
     }
+
     bool remove_edge(const int from, const int to) {
-        if (has_vertex(from)==-1) throw "Vertex from not exist";
+        if (has_vertex(from) == -1) throw "Vertex from not exist";
         shared_ptr<Edge> edge = vertus[from].edge;
         shared_ptr<Edge> pred = nullptr;
         while (edge) {
@@ -84,14 +85,6 @@ public:
         }
         return false;
     }
-    bool remove_edge(const Edge& e); //c учетом расстояния
-    bool has_edge(const Edge& e); //c учетом расстояния в Edge
-
-    //получение всех ребер, выходящих из вершины
-    vector<Edge> edges(const Vertex& vertex);
-
-    size_t order() const; //порядок
-    size_t degree() const; //степень
 
     bool belman(const int start, vector<double>& dist, vector<int>& previous) {
         dist.assign(vertus.size(), INFINITY);
@@ -116,21 +109,21 @@ public:
             }
         }
         for (auto i : vertus) {
-            shared_ptr<Edge> tmp= i.edge;
+            shared_ptr<Edge> tmp = i.edge;
             while (tmp) {
                 int from_ind = has_vertex(i.id);
                 int to_ind = has_vertex(tmp->to);
                 if (from_ind != -1 && to_ind != -1) {
                     if (dist[from_ind] + tmp->distance < dist[to_ind]) {
-                        return false; 
+                        return false;
                     }
                 }
+                tmp = tmp->next;
             }
         }
         return true;
     }
-    //поиск кратчайшего пути
-    //обход
+
     void  walk(const int start_vertex)const {
         int start_ind = has_vertex(start_vertex);
         if (start_ind == -1) throw "Vertex start not exist";
@@ -139,18 +132,18 @@ public:
         q.push(start_vertex);
         vis[start_ind] = true;
         while (!q.empty()) {
-           int tmp_ind = q.front();
-           q.pop();
-           cout << vertus[tmp_ind].id;
-           shared_ptr<Edge> tmp = vertus[tmp_ind].edge;
-           while (tmp) {
-               int tmp_next_ind = has_vertex(tmp->to);
-               if (tmp_next_ind != -1 && !vis[tmp_next_ind]) {
-                   q.push(tmp_next_ind);
-                   vis[tmp_next_ind] = true;
-               }
-               tmp = tmp->next;
-           }
+            int tmp_ind = q.front();
+            q.pop();
+            cout << vertus[tmp_ind].id;
+            shared_ptr<Edge> tmp = vertus[tmp_ind].edge;
+            while (tmp) {
+                int tmp_next_ind = has_vertex(tmp->to);
+                if (tmp_next_ind != -1 && !vis[tmp_next_ind]) {
+                    q.push(tmp_next_ind);
+                    vis[tmp_next_ind] = true;
+                }
+                tmp = tmp->next;
+            }
         }
     }
 
@@ -164,12 +157,12 @@ public:
         }
 
         int to_ind = has_vertex(to_id);
-        if (to_ind==-1) {
+        if (to_ind == -1) {
             throw "Vertex to not exist";
         }
 
         for (int v = to_ind; v != -1; v = previous[v]) {
-            if (v == previous[v]) {
+            if (v == from_id) {
                 path.push_back(Edge(from_id, dist[v], nullptr));
             }
             else {
@@ -182,34 +175,30 @@ public:
         return path;
     }
 
-
-    int emergency()
+    int task()
     {
         if (vertus.size() == 0) throw "Graph is empty";
 
-        double max_sum = -<double>INFINITY;
+        double max_sum = -INFINITY;
         int max_id = -1;
         for (auto& vertex : vertus) {
             double sum = 0;
             shared_ptr<Edge> tmp = vertex.edge;
-            while (tmp != nullptr) {
+            while (tmp) {
                 sum += tmp->distance;
                 tmp = tmp->next;
             }
 
             for (auto& v : vertus) {
-                if (has_edge(v.id, vertex.id)) {
-                    shared_ptr<Edge> tmp = v.edge;
-                    while (tmp != nullptr) {
-                        if (tmp->to == vertex.id) {
-                            sum += tmp->distance;
-                            break;
-                        }
-                        tmp = tmp->next;
+                shared_ptr<Edge> tmp = v.edge;
+                while (tmp) {
+                    if (tmp->to == vertex.id) {
+                        sum += tmp->distance;
+                        break;
                     }
+                    tmp = tmp->next;
                 }
             }
-
             if (sum > max_sum) {
                 max_sum = sum;
                 max_id = vertex.id;
@@ -220,6 +209,7 @@ public:
     }
 };
 
+
 int get_key_T()
 {
     int key = _getch();
@@ -228,16 +218,17 @@ int get_key_T()
     return key;
 }
 
+
 int menu_T() {
     cout << "\nWhat are you want to do?\n\n"
         "1 - add vertex\n"
         "2 - add edge\n"
         "3 - check vertex\n"
         "4 - check edge\n"
-        "5 - print\n"
+        "5 - walk\n"
         "6 - task\n"
         "7 - walk\n"
-        "8 - belman\n"
+        "8 -  shortest_path\n"
         "go out: Esc\n";
 
 
@@ -248,6 +239,7 @@ int menu_T() {
             return key;
     }
 }
+
 
 int Check()
 {
@@ -266,34 +258,33 @@ int Check()
 
     return number;
 }
+
+
 double Check_double()
 {
-    int number = -1;
-    while (number <= 0)
+    double number;
+    while (!(cin >> number) || (cin.peek() != '\n'))
     {
-        while (!(cin >> number) || (cin.peek() != '\n'))
-        {
-            cin.clear();
-            while (cin.get() != '\n');
-            cout << "Error. Repeat input\n";
-        }
-        if (number <= 0) cout << "Error. Enter a positive number\n";
-
+        cin.clear();
+        while (cin.get() != '\n');
+        cout << "Error. Repeat input\n";
     }
-
+    if (number <= 0) cout << "Error. Enter a positive number\n";
     return number;
 }
+
 
 void add_vertex(Graph* graph) {
     system("cls");
     cout << "Enter vertex id:";
     int v = Check();
-    while (graph->has_vertex(v)!=-1) {
+    while (graph->has_vertex(v) != -1) {
         cout << "Error. Enter vertex id:";
         int v = Check();
     }
     graph->add_vertex(v);
 }
+
 
 void add_edge(Graph* graph) {
     system("cls");
@@ -310,8 +301,9 @@ void add_edge(Graph* graph) {
         int to_v = Check();
     }
     cout << "Enter edge weight:";
-    double weight = Check_double();
-    while (graph->has_edge(from_v, to_v)==true) {
+    double weight;
+    cin >> weight;
+    while (graph->has_edge(from_v, to_v) == true) {
         system("cls");
         cout << "Edge eist. Repeat input";
         cout << "Enter vertex id from:";
@@ -323,6 +315,8 @@ void add_edge(Graph* graph) {
     }
     graph->add_edge(from_v, to_v, weight);
 }
+
+
 void check_vertex(Graph* graph) {
     system("cls");
     cout << "Enter vertex id from:";
@@ -330,6 +324,7 @@ void check_vertex(Graph* graph) {
     if (graph->has_vertex(v) != -1) cout << "Vertex exist";
     else cout << "Vertex not exist";
 }
+
 
 void check_edge(Graph* graph) {
     system("cls");
@@ -340,6 +335,7 @@ void check_edge(Graph* graph) {
     if (graph->has_edge(from_v, to_v) == true) cout << "Edge exist";
     else cout << "Edge not exist";
 }
+
 
 void print(Graph graph) {
     for (auto i : graph.vertus) {
@@ -352,29 +348,32 @@ void print(Graph graph) {
     }
 }
 
+
 void task(Graph graph) {
     system("cls");
-    cout << "The vertex is farthest from its neighbors:" << graph.emergency();
+    cout << "The vertex is farthest from its neighbors:" << graph.task();
 }
+
 
 void walk(Graph graph) {
     cout << "Enter the vertex to walk:";
     int i = Check();
     graph.walk(i);
 }
+
+
 void shortest_path(Graph graph) {
-    vector<double> dist;
-    vector<int> prev;
-    cout << "Enter the vertex to start shortest_path:";
-    int from = Check();
-    cout << "Enter the vertex to start shortest_path:";
+    cout << "write start";
+    int start = Check();
+    cout << "write end";
     int to = Check();
-    graph.shortest_path(from,to, dist, prev);
-    cout << "Enter the vertex to  belman:";
-    int j = Check();
-    int index= min_element(dist.begin(), dist.end()) - dist.begin();
-    cout << "dist = " << dist[index] << " previous:" << prev[index];
+    vector<Graph::Edge> path = graph.shortest_path(start, to);
+    for (auto i : path) {
+        cout << i.to << ' ' << i.distance;
+    }
 }
+
+
 int main() {
     Graph graph;
     while (true) {
@@ -404,14 +403,9 @@ int main() {
             walk(graph);
             break;
         case '8':
-            belman(graph);
+            shortest_path(graph);
             break;
         }
     }
     return 0;
 }
-
-/*В ширину
-Беллмана-Форда
-
-*/
