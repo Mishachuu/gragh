@@ -6,7 +6,11 @@
 #include <memory>
 #include <iostream>
 #include <conio.h>
+#include <functional>
 using namespace std;
+
+
+
 class Graph {
 public:
     struct Edge {
@@ -26,6 +30,14 @@ public:
     vector<Vertex> vertus;
 
     Graph() = default;
+
+    vector<Vertex> all_verts()
+    {
+        return  vector<Vertex>(vertus);
+    }
+
+    auto verts_begin() { return vertus.cbegin(); }
+    auto verts_end() { return vertus.cend(); }
 
     int has_vertex(const int id) const {
         for (int i = 0; i < vertus.size(); i++) {
@@ -124,12 +136,13 @@ public:
         return true;
     }
 
-    void  walk(const int start_vertex)const {
+
+    void spread_walk(const int start_vertex) {
         int start_ind = has_vertex(start_vertex);
         if (start_ind == -1) throw "Vertex start not exist";
         queue<int> q;
         vector<bool> vis(vertus.size(), false);
-        q.push(start_vertex);
+        q.push(start_ind);
         vis[start_ind] = true;
         while (!q.empty()) {
             int tmp_ind = q.front();
@@ -139,12 +152,17 @@ public:
             while (tmp) {
                 int tmp_next_ind = has_vertex(tmp->to);
                 if (tmp_next_ind != -1 && !vis[tmp_next_ind]) {
-                    q.push(tmp_next_ind);
+                    q.push(tmp->to);
                     vis[tmp_next_ind] = true;
                 }
                 tmp = tmp->next;
             }
         }
+    }
+
+    void walk(const int& start_vertex, function<void(const int)> action)
+    {
+        action(start_vertex);
     }
 
     vector<Edge> shortest_path(const int from_id, int to_id) {
@@ -208,6 +226,16 @@ public:
         return max_id;
     }
 };
+
+
+ostream& operator<<(ostream& s, Graph gr)
+{
+    for (auto it = gr.verts_begin(); it != gr.verts_end(); it++)
+    {
+        s << "id : " << it->id << endl;
+    }
+    return s;
+}
 
 
 int get_key_T()
@@ -358,7 +386,7 @@ void task(Graph graph) {
 void walk(Graph graph) {
     cout << "Enter the vertex to walk:";
     int i = Check();
-    graph.walk(i);
+    graph.walk(i, bind(&Graph::spread_walk, graph, placeholders::_1));
 }
 
 
@@ -376,7 +404,9 @@ void shortest_path(Graph graph) {
 
 int main() {
     Graph graph;
+    int A = 1;
     while (true) {
+        cout << graph;
         int m = menu_T();
         if (m == 27) break;
         switch (m)
